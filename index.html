@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Móveis Sul — Assistente de Catálogo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f0e8;
+    --surface: #fffdf8;
+    --surface2: #f0ebe0;
+    --accent: #8b5e3c;
+    --accent2: #c9975a;
+    --text: #2c2218;
+    --text-muted: #8a7a6a;
+    --border: #e0d8cc;
+    --user-bubble: #2c2218;
+    --bot-bubble: #fffdf8;
+    --shadow: 0 4px 24px rgba(44,34,24,0.08);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-image: 
+      radial-gradient(ellipse at 20% 0%, rgba(201,151,90,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(139,94,60,0.10) 0%, transparent 60%);
+  }
+
+  header {
+    width: 100%;
+    max-width: 720px;
+    padding: 36px 24px 20px;
+    text-align: center;
+  }
+
+  .logo-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .logo-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-icon svg { display: block; }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.9rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .tagline {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .divider {
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    margin: 16px auto 0;
+  }
+
+  .chat-container {
+    width: 100%;
+    max-width: 720px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px 16px;
+    gap: 12px;
+  }
+
+  .messages {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 300px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 20px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    scroll-behavior: smooth;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-track { background: transparent; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .message {
+    display: flex;
+    gap: 10px;
+    animation: fadeUp 0.3s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  .avatar.bot {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .avatar.user {
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .bubble {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .message.bot .bubble {
+    background: var(--bot-bubble);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .message.user .bubble {
+    background: var(--user-bubble);
+    color: #fff;
+    border-top-right-radius: 4px;
+  }
+
+  .typing {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 14px 16px;
+  }
+
+  .typing span {
+    width: 7px;
+    height: 7px;
+    background: var(--accent2);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  .suggestion-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 0.8rem;
+    padding: 6px 14px;
+    border-radius: 99px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .suggestion-chip:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .input-area {
+    display: flex;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 10px 12px;
+    box-shadow: var(--shadow);
+    align-items: flex-end;
+  }
+
+  textarea {
+    flex: 1;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    background: transparent;
+    color: var(--text);
+    min-height: 24px;
+    max-height: 120px;
+    line-height: 1.5;
+  }
+
+  textarea::placeholder { color: var(--text-muted); }
+
+  button.send {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  button.send:hover { background: var(--accent2); }
+  button.send:active { transform: scale(0.95); }
+  button.send:disabled { background: var(--border); cursor: not-allowed; }
+
+  footer {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    padding: 12px 16px 20px;
+    letter-spacing: 0.03em;
+  }
+
+  footer a { color: var(--accent2); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-line">
+    <div class="logo-icon">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <rect x="2" y="8" width="18" height="12" rx="2" fill="white" opacity="0.9"/>
+        <rect x="5" y="4" width="12" height="6" rx="1.5" fill="white" opacity="0.6"/>
+        <rect x="8" y="14" width="6" height="6" rx="1" fill="#c9975a"/>
+      </svg>
+    </div>
+    <h1>Móveis Sul</h1>
+  </div>
+  <p class="tagline">Assistente de Catálogo 2025/2026</p>
+  <div class="divider"></div>
+</header>
+
+<div class="chat-container">
+  <div class="messages" id="messages"></div>
+
+  <div class="suggestions" id="suggestions">
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">Quais cozinhas têm?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">Cores disponíveis</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">Cozinhas compactas</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">Medidas da Florença</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">Diferença Louise e Thalita</button>
+  </div>
+
+  <div class="input-area">
+    <textarea id="input" placeholder="Pergunte sobre produtos, medidas, cores..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send" id="sendBtn" onclick="sendMessage()">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M14 8L2 2l2.5 6L2 14l12-6z" fill="white"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<footer>
+  Móveis Sul · <a href="tel:5433586200">(54) 3358.6200</a> · Lagoa Vermelha/RS
+</footer>
+
+<script>
+const CATALOG = `
+Você é o assistente de catálogo da Móveis Sul. Responda perguntas sobre produtos de forma clara, objetiva e amigável em português.
+
+Use emojis moderadamente. Para produtos, use este formato quando relevante:
+📦 [Nome] | SKU: [código] | Medidas: [L x A x P mm] | Cores: [opções] | Destaques: [características]
+
+CATÁLOGO COMPLETO 2025/2026:
+
+=== COZINHAS MODULADAS ===
+
+FLORENÇA (NOVO) — SKU módulos: 5550,5551,5554,5555,5557,5568,5569,5570,5595,5605,5606,5553,5645,4642
+Material: 100% MDF 15mm, tampos 25mm | Cores: Canary/Off White · Angelin/Cinza Urbano · Angelin/Cobalto
+Cristaleira dupla com vidros reflecta e LED touch; dobradiças com amortecimento; sistema pega superior; corrediças telescópicas; pés Champagne
+Módulos: Balcão pia 120 (5550) 1200x870x515 | Balcão 2p 80 (5554) 800x900x530 | Balcão 1p 40 (5605) 400x900x530 | Balcão canto oblíquo (5569) 800x900x380/530 | Aéreo 120 (5551) 1200x615x325 | Aéreo 80 2p (5568) 800x615x325 | Aéreo 80 basc (5555) 800x615x325 | Aéreo 40 (5606) 400x615x325 | Aéreo canto (5570) 800/800x615x325/670 | Paneleiro (5557) 500x2200x530 | Paneleiro duplo LED (5595) 650x2200x530 | Kit forno/micro (5553) 700x2200x530 | Tampo 25mm (4642) 1200x530 | Fechamento lateral (5645) 2200x496x15
+
+ANDRIA (NOVO) — SKU módulos: 5596-5604,5616,5650,5652,4642
+Material: 100% MDF 15mm, tampos 25mm | Cores: Angelin/Nude · Naturale/Nude
+Vidros reflecta; sistema pega superior; puxadores perfis plásticos Preto; corrediças telescópicas; pés Preto
+Módulos: Balcão pia 120 (5596) 1200x880x515 | Balcão 2p 80 (5599) 800x900x530 | Balcão canto (5603) 800x900x380/530 | Aéreo 120 (5597) 1200x540x325 | Aéreo 80 2p (5650) 800x540x325 | Aéreo 80 basc (5600) 800x540x325 | Aéreo canto (5604) 800/800x540x325/670 | Paneleiro (5602) 400x2100x520 | Paneleiro vidro (5601) 400x2100x520 | Paneleiro duplo (5652) 650x2100x530 | Kit forno/micro (5616) 650x2100x530 | Kit forno vidro (5598) 650x2100x530 | Tampo 25mm (4642) 1200x530
+
+KARINE II (NOVO) — SKU: 5624-5633,5638,5663,4642
+Material: MDP 15mm, tampos 25mm | Cores: Angelin/Nude
+Vidros reflecta; sistema pega superior; puxadores alumínio Gold; corrediças telescópicas; pés Gold
+Módulos: Balcão pia 120 (5624) 1200x880x515 | Balcão 2p 80 (5626) 800x900x530 | Balcão 1p 40 (5638) 400x900x530 | Balcão canto (5630) 800x900x380/530 | Aéreo 3p 120 vidro (5625) 1200x720x325 | Aéreo 2p 80 (5627) 800x720x325 | Aéreo 1p 80 (5632) 800x400x325 | Aéreo 1p 40 (5633) 400x720x325 | Aéreo canto (5631) 800/800x720x325/670 | Paneleiro duplo (5628) 700x2250x530 | Kit forno/micro (5629) 700x2250x530 | Tampo 25mm (4642) 1200x530 | Fechamento (5663) 2250x496x15
+
+GIORGIA — SKU: 5485-5497,5501,5525,5559,4642
+Material: MDP 15mm, tampos 25mm | Cores: Canary/Off White/Vidro Reflecta
+Puxadores em "cava"; frontais ripados MDF no paneleiro e kit; pés Champagne; corrediças telescópicas
+Módulos: Balcão pia 120 (5485) 1200x875x515 | Balcão 2p 80 (5487) 800x900x530 | Balcão 1p 40 (5492) 400x900x530 | Balcão canto (5496) 800x900x380/530 | Balcão toalheiro (5494) 200x770x200 | Aéreo 3p 120 vidro (5489) 1200x700x320 | Aéreo 3p 120 (5525) 1200x700x315 | Aéreo 1p 80 (5491) 800x350x315 | Aéreo 2p 80 (5490) 800x700x315 | Aéreo 1p 40 (5493) 400x700x315 | Aéreo canto (5497) 800/800x700x300/685 | Aéreo nicho (5495) 200x700x300 | Paneleiro (5486) 500x2300x515 | Paneleiro vidro (5559) 500x2300x515 | Kit forno/micro (5488) 700x2300x515 | Tampo 25mm (4642) 1200x530 | Fechamento (5501) 2300x496x15
+
+FRANCINI — SKU: 5307-5314,5331,5348,4107
+Material: MDP 15mm | Cores: Angelin/Damasco/Vidro Reflecta · Angelin/Off White/Vidro Reflecta
+Pés e puxadores Champagne; corrediças telescópicas; detalhes ripados nos balcões; portas embutidas
+Módulos: Balcão pia 120 (5307) 1200x870x500 | Balcão 2p 80 (5309) 800x890x530 | Balcão canto (5314) 800x890x380/530 | Aéreo 120 (5312) 1200x585x300 | Aéreo 80 basc (5311) 800x380x300 | Aéreo canto (5313) 800/800x585x300/685 | Paneleiro duplo (5310) 650x2100x496 | Kit forno/micro (5308) 650x2100x530 | Kit forno vidro (5348) 650x2100x530 | Tampo 15mm (4107) 1200x530 | Fechamento (5331) 2100x496x15
+
+LOUISE — SKU: 5150-5157,4107
+Material: Chapa 15mm inclusive tampos | Cores: Nogal/Damasco/Vidro Reflecta
+Puxadores e pés Champagne; corrediças telescópicas
+Módulos: Balcão pia 120 (5150) 1200x860x500 | Balcão 2p 80 (5154) 800x860x530 | Balcão canto (5156) 800x860x380/530 | Aéreo 3p 120 (5151) 1200x540x300 | Aéreo 1p 80 (5155) 800x330x300 | Aéreo canto (5157) 800/800x540x300/685 | Paneleiro duplo vidro (5152) 700x2070x500 | Kit forno vidro (5153) 700x2070x500 | Tampo 15mm (4107) 1200x530
+
+THALITA — SKU: 5179-5186,4107
+Material: Chapa 15mm inclusive tampos | Cores: Nogal/Preto
+Puxadores Champagne; pés Preto; corrediças telescópicas
+Módulos: Balcão pia 120 (5179) 1200x890x500 | Balcão 2p 80 (5183) 800x890x530 | Balcão canto (5185) 800x890x380/530 | Aéreo 3p 120 (5180) 1200x540x300 | Aéreo 1p 80 (5184) 800x330x300 | Aéreo canto (5186) 800/800x540x300/685 | Paneleiro duplo ripado (5181) 700x2100x530 | Kit forno tela (5182) 700x2100x500 | Tampo 15mm (4107) 1200x530
+
+BRISA — SKU: 5350-5356,5639,4107
+Material: MDP 15mm | Cores: Angelin/Off White
+Pés e puxadores Champagne; gavetas corrediças telescópicas; detalhe aramado no Kit; Vidro Reflecta
+Módulos: Balcão pia 120 (5350) 1200x870x500 | Balcão 2p 80 (5351) 800x870x530 | Aéreo 3p 120 (5353) 1200x485x320 | Aéreo 120 vidro (5639) 1200x500x320 | Aéreo 1p 80 (5354) 800x355x320 | Paneleiro duplo (5356) 650x2050x496 | Kit forno/micro (5352) 650x2050x530 | Paneleiro (5355) 350x2050x320 | Tampo 15mm (4107) 1200x530
+
+LAÍS (NOVO) — SKU: 5640-5643,5646,5647,4107
+Material: MDP 15mm inclusive tampos | Cores: Tauari/Escovado Silver · Angelin/Nude
+Sistema pega superior; puxadores Gold; corrediças telescópicas; pés Gold
+Módulos: Balcão pia 120 (5640) 1200x800x515 | Balcão 2p 80 (5646) 800x815x530 | Aéreo 3p 120 (5641) 1200x450x500 | Aéreo 1p 80 (5647) 800x325 | Kit forno/micro (5642) 650x2000x530 | Paneleiro (5643) 350x2000x325 | Tampo 15mm (4107) 1200x530
+
+ALICE — SKU: 5441,5442,4107,4642
+Material: MDP 15mm | Cores: Angelin/Off White · Tauari/Escovado Silver
+Detalhe ripado no balcão; gavetas corrediças telescópicas; FLEX (montagem para ambos os lados)
+Módulos: Balcão pia/cooktop (5441) 1900x870x500 | Aéreo (5442) 1900x550/400x355 | Tampo 15mm (4107) | Tampo 25mm (4642) 1200x530
+
+=== COZINHAS COMPACTAS ===
+
+ESTHER (NOVO) — SKU: 5623 | Medidas: 1640x1950x530mm
+Material: 100% MDF 15mm | Cores: Naturale/Nude · Angelin/Nude
+Sistema pega superior; puxadores Preto; corrediças telescópicas; pés Preto | Acessório: Tampo 15mm (4107) 1200x530
+
+HELLEN — SKU: 5221 | Medidas: 1865x2005x530mm
+Material: Chapa 15mm | Cores: Nogal/Off White · Angelin/Damasco
+Pés e puxadores Champagne; corrediças telescópicas; balcão pia 90cm altura; detalhe ripado; detalhe aramado Champagne | Acessório: Tampo 15mm (4107)
+
+EVELYN — SKU: 5222 | Medidas: 1562x1900x530mm
+Material: Caixas MDP 12mm / frentes MDP 15mm | Cores: Carvalho/Off White · Angelin/Damasco
+Corrediças telescópicas; puxadores e pés com regulagens | Acessório: Tampo 15mm (4107)
+
+SOPHIA — SKU: 5199 | Medidas: 1230x1900x500mm
+Material: Chapa 15mm | Cores: Canary/Off White · Angelin/Damasco
+Corrediças telescópicas; portas embutidas; puxadores e pés plásticos | Acessório: Tampo 15mm (4107)
+
+YASMIN — SKU: 4945 | Medidas: 1230x1897x510mm
+Material: Chapa 15mm | Cores: Tauari/Escovado Silver · Angelin/Off White
+Puxadores plásticos; pés Champagne; corrediças telescópicas | Acessório: Tampo 15mm (4107)
+
+YARA — SKU: 4949 | Medidas: 1230x1897x510mm
+Material: Chapa 15mm | Cores: Angelin/Nude
+Puxadores plásticos Preto; pés reguláveis; corrediças telescópicas | Acessório: Tampo 15mm (4107)
+
+=== FUNDOS E TAMPOS ===
+Kit 6 fundos (4147): 860x1260x30mm — Branco
+Tampo 15mm (4107): 15x1200x530mm — Nogal, Carvalho, Naturale, Angelin, Canary, Tauari
+Tampo 25mm (4642): 25x1200x530mm — Naturale, Canary, Angelin
+
+=== COMPLEMENTOS DE COZINHA ===
+Dallas (Multiuso) SKU 5206 — 612x1165x390mm — Angelin, Canary, Naturale, Branco — chapa 15mm
+Lyon (Multiuso) SKU 5207 — 680x1160x420mm — Nogal/Preto, Canary, Branco — detalhe aramado Champagne
+Roma (Multiuso) SKU 4855 — 1050x815x530mm — Angelin/Off White, Branco — tampo com recorte cooktop 4 e 5 bocas
+Luna (Fruteira) SKU 4571 — 620x740x450mm — Angelin/Off White, Branco — 3 cestas aramadas Champagne
+Toulon (Multiuso filtro d'água) SKU 5204 — 340x760x390mm — Nogal/Preto, Canary, Branco
+
+=== CÓMODAS ===
+Maitê (Penteadeira c/espelho) SKU 5527 — Canary/Off White, Branco — MDP 15mm — Penteadeira 600x1550x420 | Espelho 600x1550x400 | Cômoda 1200x780x400
+Lis (Penteadeira c/espelho) NOVO SKU 5526 — Canary/Off White, Branco — MDP 15mm — 630x780x465 / 1100x1370x465 — puxadores Gold
+Monterrey (Cômoda) SKU 5447 — Angelin/Off White, Branco — MDP 15mm — 1700x1100x470mm
+Lisboa (Cômoda) SKU 4839 — Canary/Off White, Branco — caixa 12mm/frentes 15mm — 800x915x393mm
+Bariloche (Cômoda) SKU 5444 — Aveiro/Cinza Urbano, Branco — MDP 15mm — 1120x915x430mm
+
+=== COMPLEMENTOS DE DORMITÓRIO ===
+Ravena (Sapateira) SKU 5210 — 680x1385x300mm — Tauari, Branco
+Turim (Mesa computador) SKU 5078 — 1220x750x450mm — Canary, Preto, Branco
+Bari (Mesa computador) SKU 5134 — 845x760x450mm — Angelin/Off White, Branco
+Montreal (Livreiro) SKU 5361 — 570x1855x300mm — Angelin, Preto, Branco
+
+=== DORMITÓRIO MODULADO ===
+SAN DIEGO — Material: Chapa 15mm | Cores: Aveiro/Cinza Urbano | Gavetas corrediças telescópicas; puxadores MDF
+Módulos: Ponte aérea 4p casal 1700 (5172) 1700x2250x468 | Ponte aérea 4p casal 1500 (5187) 1500x2250x468 | Ponte aérea 2p solteiro (5175) 925x2250x468 | Módulo escrivaninha (5174) 800x2250x468 | Roupeiro 2p (5589) 900x2250x468 | Roupeiro 2p 2gav (5168) 900x2250x468 | Roupeiro 1p (5169) 450x2250x468 | Roupeiro canto oblíquo (5170) 820/820/820x2250 | Criado esq (5171) 450x2250x468 | Criado dir (5173) 450x2250x468 | Kit 2 espelhos (4758) 1500x300x3 | Fechamento (5176) 450x2250x15
+
+=== CONTATO ===
+Móveis Sul | www.moveissul.com.br | @moveissul | (54) 3358.6200 | Lagoa Vermelha/RS
+`;
+
+const history = [];
+let isLoading = false;
+
+function addMessage(role, text) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+
+  const avatar = document.createElement('div');
+  avatar.className = `avatar ${role}`;
+  avatar.textContent = role === 'bot' ? '🪵' : 'EU';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'message bot';
+  div.id = 'typing-indicator';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar bot';
+  avatar.textContent = '🪵';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble typing';
+  bubble.innerHTML = '<span></span><span></span><span></span>';
+
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('suggestions').style.display = 'none';
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  addMessage('user', text);
+  history.push({ role: 'user', content: text });
+
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: CATALOG,
+        messages: history
+      })
+    });
+
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Desculpe, não consegui processar sua pergunta.';
+    removeTyping();
+    addMessage('bot', reply);
+    history.push({ role: 'assistant', content: reply });
+  } catch (e) {
+    removeTyping();
+    addMessage('bot', 'Erro ao conectar. Verifique sua conexão e tente novamente.');
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function sendSuggestion(btn) {
+  document.getElementById('input').value = btn.textContent;
+  sendMessage();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// Welcome message
+window.onload = () => {
+  addMessage('bot', 'Olá! 👋 Sou o assistente de catálogo da Móveis Sul.\n\nPosso te ajudar com informações sobre cozinhas moduladas, compactas, cómodas, dormitórios — medidas, cores, SKUs e muito mais.\n\nComo posso te ajudar?');
+};
+</script>
+</body>
+</html>
